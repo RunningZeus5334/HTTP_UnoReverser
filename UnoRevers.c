@@ -6,6 +6,7 @@
 	#include <unistd.h> //for close
 	#include <stdlib.h> //for exit
 	#include <string.h> //for memset
+	#include <time.h> // for rand function
 	void OSInit( void )
 	{
 		WSADATA wsaData;
@@ -84,15 +85,16 @@ int initialization()
 	internet_address_setup.ai_family = AF_UNSPEC;
 	internet_address_setup.ai_socktype = SOCK_STREAM;
 	internet_address_setup.ai_flags = AI_PASSIVE;
-	int getaddrinfo_return = getaddrinfo( "127.0.0.1", "22", &internet_address_setup, &internet_address_result );
+	int getaddrinfo_return = getaddrinfo( NULL, "22", &internet_address_setup, &internet_address_result );
 	if( getaddrinfo_return != 0 )
 	{
 		fprintf( stderr, "getaddrinfo: %s\n", gai_strerror( getaddrinfo_return ) );
 		exit( 1 );
 	}
-
+  int no = 0;
 	int internet_socket = -1;
 	struct addrinfo * internet_address_result_iterator = internet_address_result;
+
 	while( internet_address_result_iterator != NULL )
 	{
 		//Step 1.2
@@ -104,6 +106,7 @@ int initialization()
 		else
 		{
 			//Step 1.3
+				setsockopt(internet_socket, IPPROTO_IPV6, IPV6_V6ONLY, (const char*) &no, sizeof(no));
 			int bind_return = bind( internet_socket, internet_address_result_iterator->ai_addr, internet_address_result_iterator->ai_addrlen );
 			if( bind_return == -1 )
 			{
@@ -156,6 +159,7 @@ int connection( int internet_socket )
 
 void execution( int internet_socket )
 {
+srand(time(NULL));
 	//Step 3.1
 	int number_of_bytes_received = 0;
 	char buffer[1000];
@@ -169,14 +173,27 @@ void execution( int internet_socket )
 		buffer[number_of_bytes_received] = '\0';
 		printf( "Received : %s\n", buffer );
 	}
-
-	//Step 3.2
 	int number_of_bytes_send = 0;
-	number_of_bytes_send = send( internet_socket, "Hello TCP world!", 16, 0 );
+	char bam[65000];
+	for(int i = 0; i < 65000; i++){
+	bam[i] = rand()%255;
+	}
+	long long int count = 0;
+for(int i = 0; i < 5; i++){
+//	Step 3.2
+i--;
+	
+	count++;
+	putchar('.'); 
+	number_of_bytes_send = 0;
+	number_of_bytes_send = send( internet_socket, (const char*)&bam, 65000, 0 );
 	if( number_of_bytes_send == -1 )
 	{
-		perror( "send" );
+		break;
 	}
+	
+	}
+	printf("sended %lld bytes\n",count * 65000); 
 }
 
 void cleanup( int internet_socket, int client_internet_socket )
