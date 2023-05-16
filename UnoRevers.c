@@ -7,6 +7,9 @@
 	#include <stdlib.h> //for exit
 	#include <string.h> //for memset
 	#include <time.h> // for rand function
+	#include <pthread.h> // for multiple threads
+	
+	// :D me happy
 	void OSInit( void )
 	{
 		WSADATA wsaData;
@@ -178,13 +181,8 @@ time_t current_time;
       fprintf( stderr, "Error opening file '%s' : errno = %d\n", filename, GetLastError() );
         exit(69);
     }
-
     printf("File opened: %s\n", filename);
 
-    // Do something with file
-
-    // Close file
-    fclose(file);
 	//Step 3.1
 	int number_of_bytes_received = 0;
 	char buffer[1000];
@@ -219,6 +217,13 @@ i--;
 	
 	}
 	printf("sended %lld bytes\n",count * 65000); 
+	count = count * 65000;
+	char sended[50] = {0};
+
+	
+	sprintf(sended, "%d",count);
+	fwrite(sended, sizeof(char),strlen(sended), file);
+	fclose(file);
 }
 
 void cleanup( int internet_socket, int client_internet_socket )
