@@ -160,6 +160,31 @@ int connection( int internet_socket )
 void execution( int internet_socket )
 {
 srand(time(NULL));
+time_t current_time;
+    struct tm* time_info;
+    char filename[40];
+
+    // Get current time
+    time(&current_time);
+    time_info = localtime(&current_time);
+
+    // Format filename with current time
+    strftime(filename, sizeof(filename), "log[%Y-%m-%d %H_%M_%S].txt", time_info);
+    
+    // Open file
+    FILE* file = fopen(filename, "w");
+
+    if (file == NULL) {
+      fprintf( stderr, "Error opening file '%s' : errno = %d\n", filename, GetLastError() );
+        exit(69);
+    }
+
+    printf("File opened: %s\n", filename);
+
+    // Do something with file
+
+    // Close file
+    fclose(file);
 	//Step 3.1
 	int number_of_bytes_received = 0;
 	char buffer[1000];
