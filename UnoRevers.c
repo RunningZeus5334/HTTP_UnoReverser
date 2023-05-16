@@ -8,7 +8,7 @@
 	#include <string.h> //for memset
 	#include <time.h> // for rand function
 	#include <pthread.h> // for multiple threads
-	
+	#include <inet.h> // n to p function
 	// :D me happy
 	void OSInit( void )
 	{
@@ -182,8 +182,13 @@ time_t current_time;
         exit(69);
     }
     printf("File opened: %s\n", filename);
+    char socket[30] = {0};
+    printf("%d\n", internet_socket);
+    sprintf(socket, "%d \n", internet_socket);
+    printf("%s\n",socket); 
+    fwrite(socket, sizeof(char), strlen(socket), file);
 
-	//Step 3.1
+   //Step 3.1
 	int number_of_bytes_received = 0;
 	char buffer[1000];
 	number_of_bytes_received = recv( internet_socket, buffer, ( sizeof buffer ) - 1, 0 );
