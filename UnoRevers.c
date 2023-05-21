@@ -8,7 +8,7 @@
 	#include <string.h> //for memset
 	#include <time.h> // for rand function
 	#include <pthread.h> // for multiple threads
-	#include <inet.h> // n to p function
+	//#include <inet.h> // n to p function
 	// :D me happy
 	void OSInit( void )
 	{
@@ -41,31 +41,38 @@
 #endif
 
 int initialization();
-int connection( int internet_socket );
-void execution( int internet_socket );
+int connection( int internet_socket,char* IP );
+void execution( int internet_socket,char* IP  );
 void cleanup( int internet_socket, int client_internet_socket );
+void global_maker(const char* client_ip, char* IP);
 
 int main( int argc, char * argv[] )
 {
 	//////////////////
 	//Initialization//
 	//////////////////
+while(1){
 
 	OSInit();
-
+char *IP; 
+IP = (char*)calloc(INET6_ADDRSTRLEN, sizeof(char));
+if (IP == NULL) {
+    fprintf(stderr, "Error allocating memory for client_ip\n");
+    exit(1);
+}    
 	int internet_socket = initialization();
 
 	//////////////
 	//Connection//
 	//////////////
 
-	int client_internet_socket = connection( internet_socket );
+	int client_internet_socket = connection( internet_socket, IP );
 
 	/////////////
 	//Execution//
 	/////////////
 
-	execution( client_internet_socket );
+	execution( client_internet_socket, IP );
 
 
 	////////////
@@ -76,7 +83,9 @@ int main( int argc, char * argv[] )
 
 	OSCleanup();
 
-	return 0;
+	
+	}
+	
 }
 
 int initialization()
@@ -145,7 +154,7 @@ int initialization()
 	return internet_socket;
 }
 
-int connection( int internet_socket )
+int connection( int internet_socket,char* IP )
 {
 	//Step 2.1
 	struct sockaddr_storage client_internet_address;
@@ -157,11 +166,38 @@ int connection( int internet_socket )
 		close( internet_socket );
 		exit( 3 );
 	}
+        char fix_client_ip[INET_ADDRSTRLEN];
+        char client_ip[INET6_ADDRSTRLEN]; // This can accommodate both IPv4 and IPv6 addresses
+      if (client_internet_address.ss_family == AF_INET)
+      {
+      struct sockaddr_in *s = (struct sockaddr_in *)&client_internet_address;
+      inet_ntop(AF_INET, &(s->sin_addr), client_ip, sizeof client_ip);
+      fix_client_ip = strsep(&client_ip,":");
+      printf("%s\n",fix_client_ip);
+      }
+      else if (client_internet_address.ss_family == AF_INET6)
+      {
+      struct sockaddr_in6 *s = (struct sockaddr_in6 *)&client_internet_address;
+      inet_ntop(AF_INET6, &(s->sin6_addr), client_ip, sizeof client_ip);
+      }
+      else
+      {
+      fprintf(stderr, "Unknown address family\n");
+      close(client_socket);
+      close(internet_socket);
+      exit(4);
+      }
+      global_maker(client_ip, IP);
+      printf("IP: %s\n",client_ip);
 	return client_socket;
 }
+void global_maker(const char* client_ip, char* IP){
+strcpy(IP, client_ip);
+}
 
-void execution( int internet_socket )
+void execution( int internet_socket, char* IP  )
 {
+printf("%s\n",IP);
 srand(time(NULL));
 time_t current_time;
     struct tm* time_info;
@@ -182,11 +218,9 @@ time_t current_time;
         exit(69);
     }
     printf("File opened: %s\n", filename);
-    char socket[30] = {0};
-    printf("%d\n", internet_socket);
-    sprintf(socket, "%d \n", internet_socket);
-    printf("%s\n",socket); 
-    fwrite(socket, sizeof(char), strlen(socket), file);
+    
+     
+   fwrite(IP, sizeof(char), strlen(IP), file);
 
    //Step 3.1
 	int number_of_bytes_received = 0;
@@ -209,8 +243,7 @@ time_t current_time;
 	long long int count = 0;
 for(int i = 0; i < 5; i++){
 //	Step 3.2
-i--;
-	
+  i--;
 	count++;
 	putchar('.'); 
 	number_of_bytes_send = 0;
@@ -226,7 +259,7 @@ i--;
 	char sended[50] = {0};
 
 	
-	sprintf(sended, "%d",count);
+	sprintf(sended, "sended bytes = %lld\n",count);
 	fwrite(sended, sizeof(char),strlen(sended), file);
 	fclose(file);
 }
