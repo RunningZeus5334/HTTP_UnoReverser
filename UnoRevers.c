@@ -166,14 +166,13 @@ int connection( int internet_socket,char* IP )
 		close( internet_socket );
 		exit( 3 );
 	}
-        char fix_client_ip[INET_ADDRSTRLEN];
+
         char client_ip[INET6_ADDRSTRLEN]; // This can accommodate both IPv4 and IPv6 addresses
       if (client_internet_address.ss_family == AF_INET)
       {
       struct sockaddr_in *s = (struct sockaddr_in *)&client_internet_address;
       inet_ntop(AF_INET, &(s->sin_addr), client_ip, sizeof client_ip);
-      fix_client_ip = strsep(&client_ip,":");
-      printf("%s\n",fix_client_ip);
+
       }
       else if (client_internet_address.ss_family == AF_INET6)
       {
