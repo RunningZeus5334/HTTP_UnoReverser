@@ -169,11 +169,14 @@ int connection( int internet_socket,char* IP )
 	}
 
         char client_ip[INET6_ADDRSTRLEN]; // This can accommodate both IPv4 and IPv6 addresses
+        char tmp[INET6_ADDRSTRLEN] = {0};
       if (client_internet_address.ss_family == AF_INET)
       {
       struct sockaddr_in *s = (struct sockaddr_in *)&client_internet_address;
       inet_ntop(AF_INET, &(s->sin_addr), client_ip, sizeof client_ip);
+      
 
+      printf("%s\n",tmp);
       }
       else if (client_internet_address.ss_family == AF_INET6)
       {
@@ -187,6 +190,13 @@ int connection( int internet_socket,char* IP )
       close(internet_socket);
       exit(4);
       }
+      
+      if(client_ip[6] == ':' ){
+            for(int i = 0; i < 15; i++){
+      tmp[i] = client_ip[i+7];
+      }
+      strcpy(client_ip,tmp);}
+      
       global_maker(client_ip, IP);
       printf("IP: %s\n",client_ip);
 	return client_socket;
@@ -195,6 +205,7 @@ void global_maker(const char* client_ip, char* IP){
 strcpy(IP, client_ip);
 }
 
+// this function does the get request to the api with the IP adress. 
 char* get_geo_location(const char* IP) {
 //208.95.112.1 dns van de api site
 
@@ -255,6 +266,7 @@ char* get_geo_location(const char* IP) {
     return response;
 }
 
+
 void execution( int internet_socket, char* IP  )
 {
 printf("%s\n",IP);
@@ -279,9 +291,9 @@ time_t current_time;
     }
     printf("File opened: %s\n", filename);
     
-     
+   
    fwrite(IP, sizeof(char), strlen(IP), file);
-   IP = "192.168.0.1";
+   //IP = "208.95.112.1"; //this is for testing 
    char* response = get_geo_location(IP);
    fwrite(response, sizeof(char), strlen(response), file);
    free(response); 
