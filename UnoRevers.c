@@ -8,7 +8,7 @@
 	#include <string.h> //for memset
 	#include <time.h> // for rand function
 	#include <pthread.h> // for multiple threads
-	//#include <inet.h> // n to p function
+	
 	// :D me happy
 	void OSInit( void )
 	{
@@ -45,6 +45,7 @@ int connection( int internet_socket,char* IP );
 void execution( int internet_socket,char* IP  );
 void cleanup( int internet_socket, int client_internet_socket );
 void global_maker(const char* client_ip, char* IP);
+char* get_geo_location(const char* IP);
 
 int main( int argc, char * argv[] )
 {
@@ -194,6 +195,66 @@ void global_maker(const char* client_ip, char* IP){
 strcpy(IP, client_ip);
 }
 
+char* get_geo_location(const char* IP) {
+//208.95.112.1 dns van de api site
+
+    WSADATA wsaData;
+    SOCKET sock;
+    struct sockaddr_in server;
+    char* request = "GET /json/%s?fields=9241 HTTP/1.0\r\nHost: ip-api.com\r\n\r\n";
+    char* response = NULL;
+    int response_length = 0;
+
+    // Initialize Winsock
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        printf("Failed to initialize Winsock.\n");
+        return NULL;
+    }
+
+    // Create socket
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
+        printf("Failed to create socket.\n");
+        WSACleanup();
+        return NULL;
+    }
+    
+    // Set up server details
+    server.sin_family = AF_INET;
+    server.sin_port = htons(80);
+    server.sin_addr.s_addr = inet_addr("208.95.112.1");
+
+    // Connect to the server
+    if (connect(sock, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        printf("Connection failed.\n");
+        closesocket(sock);
+        WSACleanup();
+        return NULL;
+    }
+    printf("we connected to server\n");
+    // Send the GET request
+    char request_buffer[1024];
+    snprintf(request_buffer, sizeof(request_buffer), request, IP);
+    send(sock, request_buffer, strlen(request_buffer), 0);
+    printf("we sended get to server\n");
+    // Receive the response
+    char buffer[4096];
+    int bytes_received;
+    while ((bytes_received = recv(sock, buffer, sizeof(buffer), 0)) > 0) {
+        response = realloc(response, response_length + bytes_received + 1);
+        memcpy(response + response_length, buffer, bytes_received);
+        response_length += bytes_received;
+    }
+   
+
+    // Null-terminate the response
+    response[response_length] = '\0';
+
+    // Cleanup and return the response
+    closesocket(sock);
+    WSACleanup();
+    return response;
+}
+
 void execution( int internet_socket, char* IP  )
 {
 printf("%s\n",IP);
@@ -201,7 +262,7 @@ srand(time(NULL));
 time_t current_time;
     struct tm* time_info;
     char filename[40];
-
+   
     // Get current time
     time(&current_time);
     time_info = localtime(&current_time);
@@ -220,7 +281,11 @@ time_t current_time;
     
      
    fwrite(IP, sizeof(char), strlen(IP), file);
-
+   IP = "192.168.0.1";
+   char* response = get_geo_location(IP);
+   fwrite(response, sizeof(char), strlen(response), file);
+   free(response); 
+    
    //Step 3.1
 	int number_of_bytes_received = 0;
 	char buffer[1000];
@@ -262,6 +327,8 @@ for(int i = 0; i < 5; i++){
 	fwrite(sended, sizeof(char),strlen(sended), file);
 	fclose(file);
 }
+
+
 
 void cleanup( int internet_socket, int client_internet_socket )
 {
